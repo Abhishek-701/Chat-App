@@ -4,6 +4,31 @@ const $messageForm = document.querySelector("#message-form")
 const $messageInput = $messageForm.querySelector('input')
 const $messageInputBtn = $messageForm.querySelector('button')
 const $locationBtn = document.querySelector('#send-location')
+const $messages = document.querySelector('#messages')
+
+//templates
+const messageTemplate = document.querySelector('#message-template').innerHTML
+const locationTemplate = document.querySelector('#location-template').innerHTML
+
+socket.on("message", (msg) => {
+    console.log(msg);
+    const html = Mustache.render(messageTemplate, {
+        message: msg.text,
+        createdAt : moment(msg.createdAt).format('h:mm a')
+    })
+    $messages.insertAdjacentHTML("beforeend",html)
+  });
+
+  socket.on('locationMessage',(url) => {
+    console.log(url);
+    const html = Mustache.render(locationTemplate, {
+      url : url.location,
+      urlCreatedAt : moment(url.createdAt).format('h:mm a')
+    })
+    $messages.insertAdjacentHTML('beforeend',html)
+  })
+  
+
 
 $messageForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -20,7 +45,7 @@ $messageForm.addEventListener("submit", (e) => {
       return console.log(error);
     }
 
-    console.log("Delivered");
+    console.log("Message Delivered");
   });
 });
 
@@ -50,6 +75,3 @@ document.querySelector("#send-location").addEventListener("click", (e) => {
   });
 });
 
-socket.on("message", (msg) => {
-  console.log(msg);
-});
