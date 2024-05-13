@@ -9,26 +9,54 @@ const $messages = document.querySelector('#messages')
 //templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
 const locationTemplate = document.querySelector('#location-template').innerHTML
+const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML
 
 //Option
 const {username , room} = Qs.parse(location.search , { ignoreQueryPrefix : true  })
 
+const autoScroll = () => {
+  //New message element
+  const $newMessage = $messages.lastElementChild
+
+  //Height of new message
+  const $newMessageStyles = getComputedStyle($newMessage)
+  const $newMessageMargin = parseInt($newMessageStyles.marginBottom)
+  const $newMessageHeight = $newMessage.offsetHeight + $newMessageMargin
+
+  //Visible height
+  const visibleHeight = $messages.offsetHeight
+
+  //Height of the messages container
+  const containerHeight = $messages.scrollHeight
+
+  //How far have I scrolled
+  const scrollOffset = $messages.scrollTop + visibleHeight
+
+  if(containerHeight - $newMessageHeight <= scrollOffset){
+    $messages.scrollTop =  $messages.scrollHeight
+  }
+}
+
 socket.on("message", (msg) => {
     console.log(msg);
     const html = Mustache.render(messageTemplate, {
+        username: msg.username,
         message: msg.text,
         createdAt : moment(msg.createdAt).format('h:mm a')
     })
     $messages.insertAdjacentHTML("beforeend",html)
+    autoScroll()
   });
 
   socket.on('locationMessage',(url) => {
     console.log(url);
     const html = Mustache.render(locationTemplate, {
+      username : url.username,
       url : url.location,
       urlCreatedAt : moment(url.createdAt).format('h:mm a')
     })
     $messages.insertAdjacentHTML('beforeend',html)
+    autoScroll()
   })
   
 
@@ -83,4 +111,13 @@ socket.emit('join', { username , room }, (error) => {
     alert(error)
     location.href = '/'
   }
+})
+
+socket.on('roomData', ({users, room}) => {
+  const html = Mustache.render(sidebarTemplate, {
+    room,
+    users
+  } )
+
+  document.querySelector('#sidebar').innerHTML = html
 })
